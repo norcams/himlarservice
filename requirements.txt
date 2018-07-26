@@ -1,5 +1,6 @@
 -e git+git://github.com/norcams/himlarcli.git#egg=himlarcli
 python-daemon===2.1.2
+pidlockfile==0.3
 python-foreman==0.4.5
 python-ldap==2.4.27
 argcomplete==1.9.2
