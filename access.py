@@ -48,10 +48,10 @@ def action_start():
 
 #pylint: disable=W0613
 def shutdown(signum, frame):  # signum and frame are mandatory
-    #logger = logging.getLogger(sname)
+    logger = logging.getLogger(sname)
 
     #print frame.f_globals
-    #logger.info('shutdown %s %s', signum, frame)
+    logger.info('shutdown %s %s', signum, frame)
 
     # Close rabbitmq connection
     frame.f_globals['BaseConnection'].close()
