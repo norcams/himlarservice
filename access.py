@@ -12,47 +12,43 @@ from himlarcli.keystone import Keystone
 from himlarcli.mqclient import MQclient
 from himlarcli.parser import Parser
 from himlarcli import utils as himutils
-
-import logs as log
-
+import utils
 
 def action_status():
-    logger = logging.getLogger(daemon_name)
     plf = PIDLockFile(pidfile)
     pid = plf.is_locked()
     logger.info('status pid %s' % pid)
     if pid:
-        print '%s: running, PID = %s' % (daemon_name, pid)
+        print '%s: running, PID = %s' % (sname, pid)
     else:
-        print '%s: NOT running' % (daemon_name)
+        print '%s: NOT running' % (sname)
 
 def action_stop():
-    logger.info('stopping: %s', daemon_name)
+    logger.info('stopping: %s', sname)
     plf = PIDLockFile(pidfile)
     pid = plf.is_locked()
     if pid:
         logger.info('kill pid %s', pid)
         os.kill(pid, signal.SIGTERM)
     else:
-        print "%s: NOT running" % daemon_name
+        print "%s: NOT running" % sname
 
 def action_restart():
-    logger.info('restart: %s', daemon_name)
+    logger.info('restart: %s', sname)
     action_stop()
     action_start()
 
 def action_start():
-    logger = logging.getLogger(daemon_name)
-    logger.info('starting: %s', daemon_name)
+    logger.info('starting: %s', sname)
     try:
         with ctx:
-            run_daemon()
+            run_consumer()
     except:
         sys.exit(1)
 
 #pylint: disable=W0613
 def shutdown(signum, frame):  # signum and frame are mandatory
-    #logger = logging.getLogger(daemon_name)
+    #logger = logging.getLogger(sname)
 
     #print frame.f_globals
     #logger.info('shutdown %s %s', signum, frame)
@@ -68,8 +64,8 @@ def shutdown(signum, frame):  # signum and frame are mandatory
 def process_action(ch, method, properties, body): #callback
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    logger = logging.getLogger(daemon_name)
-    kc = Keystone(config_path=config.get(daemon_name, 'himlarcli_config'), debug=options.debug, log=logger)
+    logger = logging.getLogger(sname)
+    kc = Keystone(config_path=himlarcli_config, debug=options.debug, log=logger)
     kc.set_domain('dataporten')
 
     data = json.loads(body)
@@ -88,63 +84,71 @@ def process_action(ch, method, properties, body): #callback
         elif data['action'] =='reset_password':
             logger.info('Provisioning is required! %s', data['email'])
 
-def run_daemon():
-    logger = log.get_logger(name=daemon_name,
-                            log_file=config.get(daemon_name, 'log_file'),
-                            debug=options.debug,
-                            loglevel=config.get(daemon_name, 'loglevel'))
+def run_consumer():
+    logger = utils.get_logger(name=sname,
+                              log_file=log_file,
+                              debug=options.debug,
+                              loglevel=loglevel)
 
-    mq = MQclient(options.config, debug=options.debug, log=logger)
+    mq = MQclient(himlarcli_config, debug=options.debug, log=logger)
     channel = mq.get_channel('access')
     channel.basic_consume(process_action, queue='access')
 
     logger.info('start consuming rabbitmq')
     channel.start_consuming()
 
-    # while True:
-    #      logger.info("sample INFO message")
-    #      time.sleep(5)
-
 if __name__ == "__main__":
 
     # Name
-    daemon_name = 'access-daemon'
+    sname = 'access-service'
 
     # Set up parser
-    parser = Parser(name=daemon_name,
-                    description='access daemon',
+    parser = Parser(name=sname,
+                    description='access service daemon',
                     autoload=False)
     parser.toggle_show('dry-run')
     parser.toggle_show('format')
+    parser.toggle_show('config')
     parser.add_actions({'start': 'start',
                         'stop': 'stop',
                         'restart': 'restart',
                         'status': 'status'})
+    parser.add_opt_args({'-f': {'sub': 'start',
+                                'dest': 'foreground',
+                                'const': True,
+                                'default': False,
+                                'action': 'store_const'}})
     options = parser.parse_args()
 
-    # Config
+    # Config with defaults that services.ini overrides
     config = himutils.get_config('services.ini')
+    log_file = utils.get_config(config, sname, 'log_file', '/var/log/%s.log' % sname)
+    loglevel = utils.get_config(config, sname, 'loglevel', 'INFO')
+    pidfile = utils.get_config(config, sname, 'pidfile', '/var/run/%s.pid' % sname)
+    workingdir = utils.get_config(config, sname, 'workingdir', '/opt/himlarservice')
+    himlarcli_config = utils.get_config(config, sname, 'himlarcli_config', '/etc/himlarcli/config.ini')
+    signal_map = { signal.SIGTERM: shutdown, signal.SIGPIPE: shutdown, signal.SIGINT: shutdown }
+    stdout = sys.stdout if options.debug else None
+    stderr = sys.stderr if options.debug else None
+    if hasattr(options, 'foreground'):
+        detatch = True if not options.foreground else False
+    else:
+        detatch = True
 
     # Logger
-    logger = log.get_logger(name=daemon_name,
-                            log_file=config.get(daemon_name, 'log_file'),
-                            debug=options.debug,
-                            loglevel=config.get(daemon_name, 'loglevel'))
+    logger = utils.get_logger(name=sname,
+                              log_file=log_file,
+                              debug=options.debug,
+                              loglevel=loglevel)
 
-    stdout = sys.stdout #if options.debug else os.devnull
-    stderr = sys.stderr #if options.debug else os.devnull
-    pidfile = config.get(daemon_name, 'pidfile')
-
-    signal_map = {
-         signal.SIGTERM: shutdown,
-         signal.SIGPIPE: shutdown,
-         signal.SIGINT: shutdown
-    }
-
+    # Context
     ctx =  daemon.DaemonContext(chroot_directory=None,
+                                working_directory=workingdir,
                                 signal_map=signal_map,
                                 stdout=stdout,
                                 stderr=stderr,
+                                detach_process=detatch,
+                                files_preserve=[log_file],
                                 pidfile=PIDLockFile(pidfile, 2.0))
 
     # Run local function with the same name as the action
