@@ -33,6 +33,7 @@ build:
 	rsync -avh --exclude '.git' /vendor/himlarservice/ /installdir${INSTALL_DIR}
 	cd /installdir${INSTALL_DIR}; virtualenv --clear .
 	# cd /installdir${INSTALL_DIR}; bin/python setup.py install
+	cd /installdir${INSTALL_DIR}; bin/pip install --upgrade pip
 	cd /installdir${INSTALL_DIR}; bin/pip install -r requirements.txt
 	cd /installdir${INSTALL_DIR}; virtualenv --relocatable .
 	#echo "${INSTALL_DIR}" > /installdir${INSTALL_DIR}/lib/python2.7/site-packages/himlarservice.egg-link
@@ -41,7 +42,7 @@ build:
 
 .PHONY: rpm
 rpm:
-	/usr/local/bin/fpm -s dir -t rpm \
+	source /opt/rh/rh-ruby23/enable; fpm -s dir -t rpm \
 		-n $(NAME) \
 		-v $(VERSION) \
 		--iteration "$(PACKAGE_VERSION).el$(RELVERSION)" \
