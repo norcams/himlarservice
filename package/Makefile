@@ -1,5 +1,5 @@
 NAME=himlarservice
-VERSION=1.0
+VERSION=1.1
 PACKAGE_VERSION=1
 DESCRIPTION="Set of services used for himlar cloud"
 URL="https://github.com/norcams/himlarservice"
@@ -19,15 +19,16 @@ clean:
 
 .PHONY: deps
 deps:
-	yum install -y gcc ruby-devel rpm-build openldap-devel openssl-devel
-	gem install -N fpm
+	yum install -y gcc rpm-build openldap-devel openssl-devel
+	yum install -y rh-ruby23 rh-ruby23-ruby-devel
+	source /opt/rh/rh-ruby23/enable; gem install -N fpm
 	yum install -y python-devel python-virtualenv git libyaml-devel PyYAML libffi-devel
 
 .PHONY: build
 build:
 	mkdir /vendor
 	mkdir -p /installdir${INSTALL_DIR}
-	
+
 	cd /vendor; git clone ${URL}
 	rsync -avh --exclude '.git' /vendor/himlarservice/ /installdir${INSTALL_DIR}
 	cd /installdir${INSTALL_DIR}; virtualenv --clear .
@@ -49,4 +50,3 @@ rpm:
 		--maintainer ${MAINTAINER} \
 		-C /installdir/ \
 		.
-
