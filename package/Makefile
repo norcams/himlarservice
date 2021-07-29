@@ -19,7 +19,7 @@ clean:
 
 .PHONY: deps
 deps:
-	yum install -y gcc rpm-build openldap-devel openssl-devel
+	yum install -y gcc rpm-build openldap-devel centos-release-scl openssl-devel
 	yum install -y rh-ruby23 rh-ruby23-ruby-devel
 	source /opt/rh/rh-ruby23/enable; gem install -N fpm
 	yum install -y python-devel python-virtualenv git libyaml-devel PyYAML libffi-devel
