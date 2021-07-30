@@ -1,6 +1,6 @@
 NAME=himlarservice
 VERSION=1.1
-PACKAGE_VERSION=1
+PACKAGE_VERSION=2
 DESCRIPTION="Set of services used for himlar cloud"
 URL="https://github.com/norcams/himlarservice"
 MAINTAINER="https://github.com/norcams"

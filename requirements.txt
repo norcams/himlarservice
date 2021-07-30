@@ -15,7 +15,12 @@ statsd==3.2.1
 pika==0.11.2
 cffi==1.13.1
 functools32
+prettytable==0.7.2
+PyMySQL==0.9.2
+SQLAlchemy
+tabulate
+configparser
+tweepy
 # only needed for pylint
 pylint==1.6.4
 backports.functools_lru_cache
-configparser
