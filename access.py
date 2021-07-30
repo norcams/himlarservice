@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
-import daemon
 import json
 import os
 import sys
 import signal
-import time
 import logging
 from pidlockfile import PIDLockFile
 from himlarcli.keystone import Keystone
@@ -13,11 +11,12 @@ from himlarcli.mqclient import MQclient
 from himlarcli.parser import Parser
 from himlarcli import utils as himutils
 import utils
+import daemon
 
 def action_status():
     plf = PIDLockFile(pidfile)
     pid = plf.is_locked()
-    logger.info('status pid %s' % pid)
+    logger.info('status pid %s', pid)
     if pid:
         print '%s: running, PID = %s' % (sname, pid)
     else:
@@ -81,7 +80,7 @@ def process_action(ch, method, properties, body): #callback
     else:
         if data['action'] == 'provision':
             provision = kc.provision_dataporten(email=data['email'], password=data['password'])
-        elif data['action'] =='reset_password':
+        elif data['action'] == 'reset_password':
             logger.info('Provisioning is required! %s', data['email'])
 
 def run_consumer():
@@ -126,8 +125,12 @@ if __name__ == "__main__":
     loglevel = utils.get_config(config, sname, 'loglevel', 'INFO')
     pidfile = utils.get_config(config, sname, 'pidfile', '/var/run/%s.pid' % sname)
     workingdir = utils.get_config(config, sname, 'workingdir', '/opt/himlarservice')
-    himlarcli_config = utils.get_config(config, sname, 'himlarcli_config', '/etc/himlarcli/config.ini')
-    signal_map = { signal.SIGTERM: shutdown, signal.SIGPIPE: shutdown, signal.SIGINT: shutdown }
+    himlarcli_config = utils.get_config(config, sname, 'himlarcli_config',
+                                        '/etc/himlarcli/config.ini')
+    signal_map = {
+        signal.SIGTERM: shutdown,
+        signal.SIGPIPE: shutdown,
+        signal.SIGINT: shutdown}
     stdout = sys.stdout if options.debug else None
     stderr = sys.stderr if options.debug else None
     if hasattr(options, 'foreground'):
@@ -142,14 +145,14 @@ if __name__ == "__main__":
                               loglevel=loglevel)
 
     # Context
-    ctx =  daemon.DaemonContext(chroot_directory=None,
-                                working_directory=workingdir,
-                                signal_map=signal_map,
-                                stdout=stdout,
-                                stderr=stderr,
-                                detach_process=detatch,
-                                files_preserve=[log_file],
-                                pidfile=PIDLockFile(pidfile, 2.0))
+    ctx = daemon.DaemonContext(chroot_directory=None,
+                               working_directory=workingdir,
+                               signal_map=signal_map,
+                               stdout=stdout,
+                               stderr=stderr,
+                               detach_process=detatch,
+                               files_preserve=[log_file],
+                               pidfile=PIDLockFile(pidfile, 2.0))
 
     # Run local function with the same name as the action
     action = locals().get('action_' + options.action)
