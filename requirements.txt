@@ -1,26 +1,31 @@
--e git+git://github.com/norcams/himlarcli.git#egg=himlarcli
-python-daemon===2.1.2
-pidlockfile==0.3
-pbr
-python-foreman==0.4.5
-python-ldap==2.4.27
-argcomplete==1.9.2
-IPy==0.83
-python-openstackclient==3.16.2
-python-swiftclient==3.5.0
-python-neutronclient==6.7.0
-python-designateclient==2.9.0
-gnocchiclient==7.0.1
+-e git+https://github.com/norcams/himlarcli#egg=himlarcli
+# from himlarcli
+python-daemon
+python-ldap
+argcomplete
+IPy
+pyyaml
+python-novaclient
+python-openstackclient
+python-swiftclient
+python-neutronclient
+python-designateclient
+python-glanceclient
+python-novaclient
+gnocchiclient
 statsd==3.2.1
-pika==0.11.2
-cffi==1.13.1
-functools32
+pika
 prettytable==0.7.2
-PyMySQL==0.9.2
+PyMySQL
 SQLAlchemy
-tabulate
-configparser
-tweepy
 # only needed for pylint
-pylint==1.6.4
-backports.functools_lru_cache
+pylint
+#backports.functools_lru_cache
+configparser
+#tweepy
+tabulate
+# needed for python-foreman
+#dulwich==0.19.16
+#autosemver==0.5.4
+#python-foreman==0.4.20
+#progressbar2
