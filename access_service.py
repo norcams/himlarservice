@@ -12,10 +12,6 @@ from himlarcli import utils as himutils
 def process_message(ch, method, properties, body):
     #pylint: disable=E0606,W0613
 
-    # TODO: this dos not work for some reason, might break the service after token expires!
-    # kc = Keystone(config_path=app.himlarcli_config, debug=app.debug, log=app.logger)
-    # kc.set_domain('dataporten')
-
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
     data = json.loads(body)
@@ -36,7 +32,9 @@ def process_message(ch, method, properties, body):
 class TestApp():
 
     name = 'access-service'
-    debug = True
+
+    # Change to True to output debug to stdout
+    debug = False
 
     def __init__(self, config_file='services.ini'):
         self.config = himutils.get_config(config_file)
@@ -55,16 +53,16 @@ class TestApp():
                                            log_path=log_path,
                                            debug=self.debug)
 
+    def run(self):
         self.kc = Keystone(config_path=self.himlarcli_config, debug=self.debug, log=self.logger)
         self.kc.set_domain('dataporten')
-
-    def run(self):
-        mq = MQclient(self.himlarcli_config, debug=self.debug, log=self.logger)
-        channel = mq.get_channel(queue='access')
+        self.mq = MQclient(self.himlarcli_config, debug=self.debug, log=self.logger)
+        channel = self.mq.get_channel(queue='access')
         channel.basic_consume(on_message_callback=process_message, queue='access')
 
         self.logger.info('=> start consuming rabbitmq')
         channel.start_consuming()
+
 
 if __name__ == "__main__":
     app = TestApp()
