@@ -41,8 +41,8 @@ class TestApp():
         self.pidfile_timeout = 2
         self.pidfile_path = himutils.get_config_entry(self.config, self.name, 'pidfile',
                                                       default=f'/var/log/{self.name}.log')
-        self.working_directory = himutils.get_config_entry(self.config, self.name, 'workingdir',
-                                                           default='/opt/himlarservice')
+        # self.working_directory = himutils.get_config_entry(self.config, self.name, 'workingdir',
+        #                                                    default='/opt/himlarservice')
         self.himlarcli_config = himutils.get_config_entry(self.config, self.name, 'himlarcli_config',
                                                           default='/etc/himlarcli/config.ini')
 
